@@ -1,20 +1,21 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { withRouter } from "react-router-dom";
 import PropTypes from "prop-types";
 
+import { Context } from "../store/appContext";
+
 export const Modal = props => {
-	const [state, setState] = useState({
-		//initialize state here
-	});
+	const { store, actions } = useContext(Context);
+
 	return (
 		<div className="modal" tabIndex="-1" role="dialog" style={{ display: props.show ? "inline-block" : "none" }}>
 			<div className="modal-dialog" role="document">
 				<div className="modal-content">
 					<div className="modal-header">
 						<h5 className="modal-title">Are you sure?</h5>
-						{props.onClose ? (
+						{props.onClosed ? (
 							<button
-								onClick={() => props.onClose()}
+								onClick={() => props.onClosed()}
 								type="button"
 								className="close"
 								data-dismiss="modal"
@@ -32,7 +33,14 @@ export const Modal = props => {
 						<button type="button" className="btn btn-primary">
 							Oh no!
 						</button>
-						<button type="button" className="btn btn-secondary" data-dismiss="modal">
+						<button
+							type="button"
+							className="btn btn-secondary"
+							data-dismiss="modal"
+							onClick={() => {
+								props.onClosed();
+								actions.deleteContact(props.user);
+							}}>
 							Do it!
 						</button>
 					</div>
@@ -41,21 +49,17 @@ export const Modal = props => {
 		</div>
 	);
 };
-/**
- * Define the data-types for
- * your component's properties
- **/
+
 Modal.propTypes = {
 	history: PropTypes.object,
-	onClose: PropTypes.func,
-	show: PropTypes.bool
+	onClosed: PropTypes.func,
+	show: PropTypes.bool,
+	user: PropTypes.object
 };
 
-/**
- * Define the default values for
- * your component's properties
- **/
 Modal.defaultProps = {
 	show: false,
 	onClose: null
 };
+
+export default Modal;

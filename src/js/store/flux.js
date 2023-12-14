@@ -1,82 +1,60 @@
 const getState = ({ getStore, getActions, setStore }) => {
 	return {
 		store: {
-			apiContacts: [],
-			localContacts: [
-				{
-					name: "Paolo",
-					email: "pluco@gmail.com",
-					address: "123 Lincoln rd",
-					phone: "123456"
-				}
-			]
+			apiUrl: "https://assets.breatheco.de/apis/fake/contact/agenda/AllthePeople",
+			contacts: [],
+			currentContact: ""
 		},
-
 		actions: {
-			addANewContact: (name, email, address, phone, saveLocation, history) => {
-				let store = getStore();
-				console.log("CLICK", store);
-				// This method will receive name, address, phone and email from addContact view
-				// and it will post to the backend or to the store
-				saveLocation === "store"
-					? setStore({
-							localContacts: store.localContacts.concat({
-								name: name,
-								email: email,
-								address: address,
-								phone: phone
-							})
-					  })
-					: fetch("https://playground.4geeks.com/apis/fake/contact", {
-							method: "POST",
-							headers: { "Content-Type": "application/json" },
-							body: JSON.stringify({
-								name: name,
-								email: email,
-								address: address,
-								phone: phone
-							})
-					  })
-							.then(() => {
-								fetch("https://playground.4geeks.com/apis/fake/contact")
-									.then(response => response.json())
-									.then(data => {
-										setStore({ apiContacts: data });
-									});
-							})
+			getContacts: apiUrl => {
+				fetch(apiUrl).then(async res => {
+					const response = await res.json();
+					setStore({ contacts: [...getStore().contacts, ...response] });
+				});
+			},
 
-							.then(() => history.push("/contacts/api"));
-			},
-			editContact: (name, email, address, phone, saveLocation, index) => {
-				let store = getStore();
-				let updated_store = store.localContacts
-					.slice(0, index)
-					.concat({
-						...store.localContacts[index],
-						name: name,
-						email: email,
-						address: address,
-						phone: phone
+			addContact: async input => {
+				setStore({ contacts: [...getStore().contacts, input] });
+				let response = await fetch("https://assets.breatheco.de/apis/fake/contact/", {
+					method: "POST",
+					body: JSON.stringify({
+						full_name: input.name,
+						email: input.email,
+						agenda_slug: "AllthePeople",
+						address: input.address,
+						phone: input.phone
+					}),
+					headers: new Headers({
+						"Content-Type": "application/json"
 					})
-					.concat(store.localContacts.slice(index + 1));
-				console.log("Upd", updated_store);
-				setStore({ localContacts: updated_store });
-				saveLocation === "store"
-					? setStore({
-							localContacts: store.localContacts.splice(index, 1, {
-								...store[index],
-								name: name,
-								email: email,
-								address: address,
-								phone: phone
-							})
-					  })
-					: console.log("api:", name, email, address, phone).then(() => history.push("/"));
+				});
+				response = await response.json();
 			},
-			deleteContact: index => {
-				let store = getStore();
-				console.log("index", index);
-				setStore({ localContacts: store.localContacts.filter((item, index) => index !== index) });
+
+			edditContact: async (input, contact) => {
+				let response = await fetch("https://assets.breatheco.de/apis/fake/contact/" + contact.id, {
+					method: "PUT",
+					body: JSON.stringify({
+						full_name: input.name,
+						email: input.email,
+						agenda_slug: "AllthePeople",
+						address: input.address,
+						phone: input.phone
+					}),
+					headers: {
+						"Content-Type": "application/json"
+					}
+				});
+				response = await response.json();
+				
+			},
+
+			deleteContact: async contact => {
+				setStore({ contacts: getStore().contacts.filter(index => index !== contact) });
+				let response = await fetch("https://assets.breatheco.de/apis/fake/contact/" + contact.id, {
+					method: "DELETE"
+				});
+				response = await response.json();
 			}
 		}
 	};
